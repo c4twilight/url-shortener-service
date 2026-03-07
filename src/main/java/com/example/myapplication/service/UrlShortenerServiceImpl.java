@@ -4,10 +4,12 @@ import com.example.myapplication.dto.UrlMappingDto;
 import com.example.myapplication.dto.UserInfoDto;
 import com.example.myapplication.dto.UserUrlMappingsResponseDto;
 import com.example.myapplication.entity.UrlMapping;
+import com.example.myapplication.exception.ShortUrlNotFoundException;
 import com.example.myapplication.repository.UrlRepository;
 import com.example.myapplication.strategy.ShortUrlGenerator;
 import jakarta.transaction.Transactional;
-import org.apache.zookeeper.KeeperException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class UrlShortenerServiceImpl implements UrlShortenerService {
+    private static final Logger log = LoggerFactory.getLogger(UrlShortenerServiceImpl.class);
 
     private final UrlRepository urlRepository;
     private final ShortUrlGenerator shortUrlGenerator;
@@ -53,6 +56,7 @@ public class UrlShortenerServiceImpl implements UrlShortenerService {
 
         // Update the mapping with the generated shortUrl
         mapping = urlRepository.save(mapping);
+        log.info("Created short URL mapping for userId={} shortCode={}", mapping.getUserId(), mapping.getShortUrl());
 
         return UserInfoDto.builder()
                 .userId(mapping.getUserId())
@@ -65,7 +69,7 @@ public class UrlShortenerServiceImpl implements UrlShortenerService {
     public String getOriginalUrl(String shortUrl) {
         Optional<UrlMapping> mappingOpt = urlRepository.findByShortUrl(shortUrl);
         return mappingOpt.map(UrlMapping::getOldUrl)
-                .orElseThrow(() -> new RuntimeException("Short URL not found"));
+                .orElseThrow(() -> new ShortUrlNotFoundException(shortUrl));
     }
 
     @Override
