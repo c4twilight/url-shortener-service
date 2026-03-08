@@ -22,6 +22,11 @@ Learning comments in source files are intentionally preserved.
 - `GET /s/{shortUrl}` resolve original URL
 - `GET /s/user/{userId}` list URLs for a user
 
+## Short Code Strategy
+- The project currently keeps a fixed-length Base62 output (8 chars) padded with `=`.
+- This behavior is preserved intentionally for learning continuity.
+- You can switch to non-padded Base62 later if you want cleaner URL aesthetics.
+
 Example request:
 
 ```json
