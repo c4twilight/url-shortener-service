@@ -8,6 +8,8 @@ public class Base62UrlGenerator implements ShortUrlGenerator {
 
     @Override
     public String generateShortUrl(Long id) {
-        return Base62Encoder.encode(id);
+        String code = Base62Encoder.encode(id);
+        // Keep fixed-length output (learning reference): 8-char code padded with '='.
+        return String.format("%-8s", code).replace(' ', '=');
     }
 }
