@@ -56,3 +56,23 @@ docker run --rm -p 8080:8080 myapplication:local
 
 ## Health Check
 - `GET /actuator/health`
+
+## System Design (URL Shortener)
+### Core Flow
+1. Client sends original URL + user ID to `POST /s`.
+2. Service checks existing mapping (`userId + oldUrl`) for idempotent behavior.
+3. If missing, service persists record, generates Base62 short code from DB ID, and updates mapping.
+4. Client resolves by `GET /s/{shortUrl}` which maps short code back to original URL.
+
+### Current Components
+- API Layer: Spring REST controller (`/s` endpoints)
+- Service Layer: business logic for create/resolve/list
+- Persistence Layer: JPA repository with H2 (dev default)
+- Utility Layer: Base62 encoding strategy
+
+### Scalability Roadmap
+- Cache `shortUrl -> oldUrl` in Redis to reduce DB reads
+- Add rate-limiting to avoid abuse and brute-force scans
+- Add async click analytics pipeline (Kafka + consumer + OLAP store)
+- Move from in-memory DB to managed SQL (PostgreSQL/MySQL)
+- Add API gateway + auth for multi-tenant use
