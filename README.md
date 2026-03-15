@@ -1,73 +1,40 @@
-# Spring Boot Production Showcase
+# URL Shortener Service
 
-A production-style Spring Boot project that demonstrates three core areas:
-- REST API design and testing (COVID stats module)
-- DSA implementation in a service API (tree preorder/subtree query module)
-- OOP design patterns (Observer pattern social platform module)
-
-It also keeps your existing URL shortener module so the project showcases multiple practical backend patterns in one repo.
+Spring Boot backend service to create and resolve short URLs.
 
 ## Tech Stack
 - Java 17
-- Spring Boot 3.4
+- Spring Boot 3
 - Spring Web, Spring Data JPA, Validation, Actuator
-- H2 (default local) and PostgreSQL profile support
-- JUnit 5 + MockMvc
-- Docker multi-stage build
-- GitHub Actions CI
+- H2 (default)
 
-## Modules
+## Architecture
+- `controller`: REST endpoints
+- `service`: business logic and short-code generation
+- `repository`: persistence
+- `dto`: API payloads
+- `exception`: global exception handling
 
-### 1) URL Shortener
-- `POST /s`
-- `GET /s/{shortUrl}`
-- `GET /s/user/{userId}`
+Learning comments in source files are intentionally preserved.
 
-### 2) COVID Stats (from your Module 1 problem)
-- `GET /covid`
-- `POST /covid`
-- `GET /covid/{id}`
-- `GET /covid/top5?by=active|death|recovered`
-- `GET /covid/total?by=active|death|recovered`
+## API
+- `POST /s` create short URL
+- `GET /s/{shortUrl}` resolve original URL
+- `GET /s/user/{userId}` list URLs for a user
 
-Rules implemented:
-- Invalid `by` -> `400 Bad Request`
-- Missing covid id -> `404 Not Found`
+## Short Code Strategy
+- The project currently keeps a fixed-length Base62 output (8 chars) padded with `=`.
+- This behavior is preserved intentionally for learning continuity.
+- You can switch to non-padded Base62 later if you want cleaner URL aesthetics.
 
-### 3) Tree Query Solver (from your Module 2 problem)
-- `POST /algorithms/tree-queries/solve`
+Example request:
 
-Sample request:
 ```json
 {
-  "par": [-1, 1, 1, 2, 2, 3],
-  "query": [[1, 1], [2, 3], [3, 2], [5, 2]]
+  "userId": 101,
+  "oldUrl": "https://example.com/article/abc"
 }
 ```
-
-Sample response:
-```json
-{
-  "answers": [1, 5, 6, -1]
-}
-```
-
-### 4) Social Observer Platform (from your Module 3 problem)
-- `POST /social/users`
-- `POST /social/follow`
-- `POST /social/unfollow`
-- `POST /social/posts`
-
-The post flow returns event lines in the exact style of the HackerRank output format.
-
-## Production-Readiness Features
-- Structured global error responses (`timestamp`, `status`, `error`, `message`, `path`)
-- Input validation on request payloads
-- Deterministic integration tests for all three modules
-- Actuator health/info endpoints
-- OpenAPI UI via springdoc: `/swagger-ui/index.html`
-- Dockerized build/runtime image
-- CI pipeline (`.github/workflows/ci.yml`) with test + coverage artifact upload
 
 ## Run Locally
 ```bash
@@ -76,25 +43,36 @@ The post flow returns event lines in the exact style of the HackerRank output fo
 
 ## Run Tests
 ```bash
-./mvnw clean test
+./mvnw test
 ```
-
-## Run with Production Profile
-```bash
-SPRING_PROFILES_ACTIVE=prod ./mvnw spring-boot:run
-```
-
-Set datasource env vars for production profile:
-- `SPRING_DATASOURCE_URL`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
 
 ## Docker
+Build and run:
+
 ```bash
-docker build -t springboot-showcase:local .
-docker run --rm -p 8080:8080 springboot-showcase:local
+docker build -t myapplication:local .
+docker run --rm -p 8080:8080 myapplication:local
 ```
 
-## Health
+## Health Check
 - `GET /actuator/health`
-- `GET /actuator/info`
+
+## System Design (URL Shortener)
+### Core Flow
+1. Client sends original URL + user ID to `POST /s`.
+2. Service checks existing mapping (`userId + oldUrl`) for idempotent behavior.
+3. If missing, service persists record, generates Base62 short code from DB ID, and updates mapping.
+4. Client resolves by `GET /s/{shortUrl}` which maps short code back to original URL.
+
+### Current Components
+- API Layer: Spring REST controller (`/s` endpoints)
+- Service Layer: business logic for create/resolve/list
+- Persistence Layer: JPA repository with H2 (dev default)
+- Utility Layer: Base62 encoding strategy
+
+### Scalability Roadmap
+- Cache `shortUrl -> oldUrl` in Redis to reduce DB reads
+- Add rate-limiting to avoid abuse and brute-force scans
+- Add async click analytics pipeline (Kafka + consumer + OLAP store)
+- Move from in-memory DB to managed SQL (PostgreSQL/MySQL)
+- Add API gateway + auth for multi-tenant use

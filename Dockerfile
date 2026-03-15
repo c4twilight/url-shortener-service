@@ -12,7 +12,7 @@ RUN chmod +x mvnw && ./mvnw -q -DskipTests package
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 RUN useradd -r -u 1001 appuser
-COPY --from=builder /workspace/target/springboot-production-showcase-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /workspace/target/myapplication-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 USER appuser
 ENTRYPOINT ["java","-jar","/app/app.jar"]
