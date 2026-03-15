@@ -7,7 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class MyapplicationApplication {
 
 	public static void main(String[] args) {
-		System.out.println("Url shortner");
 		SpringApplication.run(MyapplicationApplication.class, args);
 	}
 

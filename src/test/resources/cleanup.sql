@@ -1,0 +1,2 @@
+DELETE FROM covid_stats;
+ALTER TABLE covid_stats ALTER COLUMN id RESTART WITH 1;
